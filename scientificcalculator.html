@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Scientific Calculator</title>
+<style>
+  :root {
+    --bg: #f2f2f4;
+    --card: #ffffff;
+    --ink: #1c1c1e;
+    --muted: #8e8e93;
+    --num: #ffffff;
+    --num-hover: #f7f7f8;
+    --fn: #e3e3e8;
+    --fn-hover: #d6d6dc;
+    --util: #c9c9cf;
+    --util-hover: #bcbcc4;
+    --accent: #0a84ff;
+    --accent-hover: #0070e0;
+    --line: #ececef;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+  }
+  .wrap { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px 40px; }
+  .calc { width: 100%; max-width: 380px; }
+
+  /* Mode tabs */
+  .tabs { display: flex; background: var(--fn); border-radius: 14px; padding: 3px; margin-bottom: 14px; }
+  .tabs button {
+    flex: 1; border: 0; background: transparent; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    padding: 9px 0; border-radius: 11px; transition: all .15s;
+  }
+  .tabs button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 4px; }
+  .title { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--muted); text-transform: uppercase; }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  .mem-flag { font-size: 11px; font-weight: 700; color: var(--accent); background: #e7f1ff; border-radius: 999px; padding: 2px 8px; visibility: hidden; }
+  .mem-flag.on { visibility: visible; }
+  .toggle { display: flex; background: var(--fn); border-radius: 999px; padding: 2px; }
+  .toggle button { border: 0; background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--muted); padding: 5px 12px; border-radius: 999px; transition: all .15s; }
+  .toggle button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .hist-btn { border: 0; cursor: pointer; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; transition: all .15s; background: var(--fn); color: #5a5a5f; }
+  .hist-btn.active { background: var(--accent); color: #fff; }
+
+  .display { background: var(--card); border-radius: 22px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .expr { text-align: right; color: var(--muted); font-size: 16px; min-height: 22px; word-break: break-all; }
+  .result { text-align: right; color: var(--ink); font-size: 46px; font-weight: 300; margin-top: 4px; word-break: break-all; line-height: 1.1; }
+
+  .history { background: var(--card); border-radius: 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); max-height: 200px; overflow-y: auto; }
+  .history .empty { text-align: center; color: var(--muted); font-size: 14px; padding: 24px; }
+  .history .head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 4px; }
+  .history .head span { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .history .head button { border: 0; background: none; color: var(--accent); font-size: 12px; cursor: pointer; }
+  .hist-item { width: 100%; text-align: right; border: 0; background: none; cursor: pointer; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  .hist-item:last-child { border-bottom: 0; }
+  .hist-item:hover { background: #fafafa; }
+  .hist-item .he { color: var(--muted); font-size: 13px; word-break: break-all; }
+  .hist-item .hr { color: var(--ink); font-size: 17px; word-break: break-all; }
+
+  .grid { display: grid; gap: 8px; margin-bottom: 8px; }
+  .g5 { grid-template-columns: repeat(5, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+
+  button.key { border: 0; cursor: pointer; height: 54px; border-radius: 16px; font-size: 19px; font-weight: 500; transition: transform .05s, background .15s; display: flex; align-items: center; justify-content: center; }
+  button.key:active { transform: scale(.95); }
+  button.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .k-num { background: var(--num); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .k-num:hover { background: var(--num-hover); }
+  .k-op { background: var(--accent); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .k-op:hover { background: var(--accent-hover); }
+  .k-eq { background: var(--accent); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .k-eq:hover { background: var(--accent-hover); }
+  .k-fn { background: var(--fn); color: #4a4a4f; font-size: 16px; }
+  .k-fn:hover { background: var(--fn-hover); }
+  .k-util { background: var(--util); color: #2a2a2e; }
+  .k-util:hover { background: var(--util-hover); }
+
+  .tip { text-align: center; font-size: 11px; color: var(--muted); margin-top: 14px; }
+  sup { font-size: .7em; }
+
+  /* Converter panels */
+  .panel { background: var(--card); border-radius: 22px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .field-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 2px 2px 6px; }
+  .conv-row { display: flex; gap: 10px; align-items: stretch; }
+  .conv-row input {
+    flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px;
+    font-size: 22px; font-weight: 400; color: var(--ink); background: #fbfbfc; outline: none;
+  }
+  .conv-row input:focus { border-color: var(--accent); }
+  .conv-row input[readonly] { background: #f2f6ff; border-color: #dce8fb; color: var(--accent); font-weight: 500; }
+  .conv-row select {
+    width: 124px; flex: 0 0 124px; border: 1px solid var(--line); border-radius: 14px; padding: 0 10px;
+    font-size: 16px; font-weight: 700; letter-spacing: .02em; color: var(--ink); background: #fff; outline: none; cursor: pointer; text-align: center;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .conv-row select:focus { border-color: var(--accent); }
+  .cur-name { text-align: right; font-size: 12px; color: var(--muted); margin: 6px 4px 0; min-height: 16px; }
+  .cur-name .metal { color: #b8860b; font-weight: 600; }
+  .category { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 16px; font-weight: 600; color: var(--ink); background: #fff; outline: none; cursor: pointer; margin-bottom: 16px;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .swap-wrap { display: flex; justify-content: center; margin: 12px 0; }
+  .swap {
+    border: 0; cursor: pointer; width: 42px; height: 42px; border-radius: 50%;
+    background: var(--fn); color: #4a4a4f; font-size: 18px; transition: all .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .swap:hover { background: var(--accent); color: #fff; transform: rotate(180deg); }
+  .fx-status { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .fx-status .stxt { font-size: 12px; color: var(--muted); }
+  .fx-status .stxt b { color: var(--ink); font-weight: 600; }
+  .fx-status .live { color: #34c759; }
+  .fx-status .offline { color: #ff9500; }
+  .refresh { border: 0; cursor: pointer; font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 999px; background: var(--accent); color: #fff; }
+  .refresh:disabled { opacity: .55; cursor: default; }
+  /* Currency selects: show short codes, centred and bold, so they always fit */
+  #panel-fx .conv-row select { width: 96px; flex: 0 0 96px; font-size: 17px; font-weight: 700; text-align: center; text-align-last: center; letter-spacing: .02em; }
+  .cur-caption { font-size: 12px; color: var(--muted); margin: 6px 4px 2px; text-align: right; min-height: 15px; }
+  .metal-toggle { width: 100%; margin-top: 10px; border: 0; background: none; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--accent); padding: 6px; }
+  .metal-edit { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .metal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metal-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 600; color: var(--muted); }
+  .metal-grid input { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 15px; color: var(--ink); background: #fbfbfc; outline: none; }
+  .metal-grid input:focus { border-color: var(--accent); }
+  .metal-note { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="calc">
+
+    <!-- Mode tabs -->
+    <div class="tabs" id="tabs">
+      <button data-tab="calc" class="active">Calculator</button>
+      <button data-tab="units">Units</button>
+      <button data-tab="fx">Currency</button>
+    </div>
+
+    <!-- ===================== CALCULATOR ===================== -->
+    <div id="panel-calc">
+      <div class="topbar">
+        <span class="title">Scientific</span>
+        <div class="controls">
+          <span class="mem-flag" id="memFlag">M</span>
+          <div class="toggle" id="modeToggle">
+            <button data-mode="deg" class="active">DEG</button>
+            <button data-mode="rad">RAD</button>
+          </div>
+          <button class="hist-btn" id="histBtn">History</button>
+        </div>
+      </div>
+
+      <div class="display">
+        <div class="expr" id="exprEl">&nbsp;</div>
+        <div class="result" id="resultEl">0</div>
+      </div>
+
+      <div class="history" id="histPanel" style="display:none;"></div>
+
+      <div class="grid g5">
+        <button class="key k-fn" data-action="MC">MC</button>
+        <button class="key k-fn" data-action="MR">MR</button>
+        <button class="key k-fn" data-action="M+">M+</button>
+        <button class="key k-fn" data-action="M-">M&minus;</button>
+        <button class="key k-fn" data-append="!">x!</button>
+      </div>
+
+      <div class="grid g5" id="fnRows"></div>
+      <div class="grid g4" id="mainPad"></div>
+
+      <p class="tip">Keyboard works too — digits, + &minus; * / ^ ( ) %, Enter = evaluate, Esc = clear.</p>
+    </div>
+
+    <!-- ===================== UNITS ===================== -->
+    <div id="panel-units" class="hidden">
+      <div class="topbar"><span class="title">Unit Converter</span></div>
+      <div class="panel">
+        <select class="category" id="unitCategory"></select>
+
+        <div class="field-label">From</div>
+        <div class="conv-row">
+          <input type="text" inputmode="decimal" id="unitFromVal" value="1">
+          <select id="unitFromUnit"></select>
+        </div>
+
+        <div class="swap-wrap"><button class="swap" id="unitSwap" title="Swap">&#8693;</button></div>
+
+        <div class="field-label">To</div>
+        <div class="conv-row">
+          <input type="text" id="unitToVal" readonly>
+          <select id="unitToUnit"></select>
+        </div>
+      </div>
+      <p class="tip">Type a value on the left — the conversion updates as you go.</p>
+    </div>
+
+    <!-- ===================== CURRENCY ===================== -->
+    <div id="panel-fx" class="hidden">
+      <div class="topbar"><span class="title">Currency</span></div>
+      <div class="panel">
+        <div class="field-label">From</div>
+        <div class="conv-row">
+          <input type="text" inputmode="decimal" id="fxFromVal" value="1">
+          <select id="fxFromCur"></select>
+        </div>
+        <div class="cur-caption" id="fxFromName"></div>
+
+        <div class="swap-wrap"><button class="swap" id="fxSwap" title="Swap">&#8693;</button></div>
+
+        <div class="field-label">To</div>
+        <div class="conv-row">
+          <input type="text" id="fxToVal" readonly>
+          <select id="fxToCur"></select>
+        </div>
+        <div class="cur-caption" id="fxToName"></div>
+
+        <div class="fx-status">
+          <span class="stxt" id="fxStatus">Loading rates…</span>
+          <button class="refresh" id="fxRefresh">Refresh</button>
+        </div>
+
+        <button class="metal-toggle" id="metalToggle">⚙ Edit metal spot prices (USD/oz)</button>
+        <div class="metal-edit hidden" id="metalEdit">
+          <div class="metal-grid">
+            <label>Gold · XAU<input type="text" inputmode="decimal" id="priceXAU"></label>
+            <label>Silver · XAG<input type="text" inputmode="decimal" id="priceXAG"></label>
+            <label>Platinum · XPT<input type="text" inputmode="decimal" id="priceXPT"></label>
+            <label>Palladium · XPD<input type="text" inputmode="decimal" id="priceXPD"></label>
+          </div>
+          <div class="metal-note">USD per troy ounce — paste in the latest close and every conversion updates instantly.</div>
+        </div>
+      </div>
+      <p class="tip">Live currency rates from the European Central Bank (Frankfurter), with exchangerate-api.com as backup; the status line shows the date the rates are from. Offline snapshot used only with no connection. Metals (XAU/XAG/XPT/XPD) are approximate, priced per troy ounce.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ====================== Expression engine (no eval) ====================== */
+const FUNCS = new Set(["sin","cos","tan","asin","acos","atan","ln","log","sqrt"]);
+function normalize(str){ return str.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/√/g,"sqrt").replace(/π/g,"pi"); }
+function tokenize(input){
+  const s = normalize(input); const tokens = []; let i = 0;
+  while(i < s.length){
+    const c = s[i];
+    if(c === " "){ i++; continue; }
+    if(/[0-9.]/.test(c)){ let num=""; while(i<s.length && /[0-9.]/.test(s[i])) num+=s[i++]; if((num.match(/\./g)||[]).length>1) throw new Error("bad number"); tokens.push({type:"num",value:parseFloat(num)}); continue; }
+    if(/[a-z]/i.test(c)){ let id=""; while(i<s.length && /[a-z]/i.test(s[i])) id+=s[i++]; id=id.toLowerCase();
+      if(id==="pi") tokens.push({type:"const",value:Math.PI});
+      else if(id==="e") tokens.push({type:"const",value:Math.E});
+      else if(FUNCS.has(id)) tokens.push({type:"func",value:id});
+      else throw new Error("unknown identifier: "+id); continue; }
+    if("+-*/^()!%²".includes(c)){ tokens.push({type:"op",value:c}); i++; continue; }
+    throw new Error("unexpected char: "+c);
+  }
+  return insertImplicitMul(tokens);
+}
+function insertImplicitMul(tokens){
+  const out=[];
+  const endsOperand=t=>t&&(t.type==="num"||t.type==="const"||(t.type==="op"&&(t.value===")"||t.value==="!"||t.value==="²"||t.value==="%")));
+  const startsOperand=t=>t&&(t.type==="num"||t.type==="const"||t.type==="func"||(t.type==="op"&&t.value==="("));
+  for(let k=0;k<tokens.length;k++){ if(k>0&&endsOperand(tokens[k-1])&&startsOperand(tokens[k])) out.push({type:"op",value:"*"}); out.push(tokens[k]); }
+  return out;
+}
+function factorial(n){ if(n<0||!Number.isInteger(n)) throw new Error("factorial needs a non-negative integer"); if(n>170) return Infinity; let r=1; for(let k=2;k<=n;k++) r*=k; return r; }
+function applyFunc(name,x,mode){
+  const toRad=d=>mode==="deg"?d*Math.PI/180:d;
+  const fromRad=r=>mode==="deg"?r*180/Math.PI:r;
+  switch(name){
+    case "sin": return Math.sin(toRad(x));
+    case "cos": return Math.cos(toRad(x));
+    case "tan": return Math.tan(toRad(x));
+    case "asin": return fromRad(Math.asin(x));
+    case "acos": return fromRad(Math.acos(x));
+    case "atan": return fromRad(Math.atan(x));
+    case "ln": return Math.log(x);
+    case "log": return Math.log10(x);
+    case "sqrt": return Math.sqrt(x);
+    default: throw new Error("bad func");
+  }
+}
+function parse(tokens, mode){
+  let pos=0; const peek=()=>tokens[pos]; const next=()=>tokens[pos++];
+  function expression(){ let left=term(); while(peek()&&peek().type==="op"&&(peek().value==="+"||peek().value==="-")){ const op=next().value; const r=term(); left=op==="+"?left+r:left-r; } return left; }
+  function term(){ let left=unary(); while(peek()&&peek().type==="op"&&(peek().value==="*"||peek().value==="/")){ const op=next().value; const r=unary(); left=op==="*"?left*r:left/r; } return left; }
+  function unary(){ if(peek()&&peek().type==="op"&&(peek().value==="-"||peek().value==="+")){ const op=next().value; const v=unary(); return op==="-"?-v:v; } return power(); }
+  function power(){ const base=postfix(); if(peek()&&peek().type==="op"&&peek().value==="^"){ next(); const exp=unary(); return Math.pow(base,exp); } return base; }
+  function postfix(){ let v=primary(); while(peek()&&peek().type==="op"&&(peek().value==="!"||peek().value==="²"||peek().value==="%")){ const op=next().value; if(op==="!") v=factorial(v); else if(op==="²") v=v*v; else v=v/100; } return v; }
+  function primary(){
+    const t=peek(); if(!t) throw new Error("unexpected end");
+    if(t.type==="num"||t.type==="const"){ next(); return t.value; }
+    if(t.type==="func"){ next(); if(!peek()||peek().value!=="(") throw new Error("expected ("); next(); const arg=expression(); if(!peek()||peek().value!==")") throw new Error("expected )"); next(); return applyFunc(t.value,arg,mode); }
+    if(t.type==="op"&&t.value==="("){ next(); const v=expression(); if(!peek()||peek().value!==")") throw new Error("expected )"); next(); return v; }
+    throw new Error("unexpected token: "+t.value);
+  }
+  const result=expression(); if(pos!==tokens.length) throw new Error("trailing tokens"); return result;
+}
+function evaluate(expr, mode){ const tokens=tokenize(expr); if(tokens.length===0) throw new Error("empty"); return parse(tokens, mode); }
+function formatResult(n){ if(Number.isNaN(n)) return "Error"; if(!Number.isFinite(n)) return n>0?"∞":"-∞"; if(Object.is(n,-0)) n=0; return parseFloat(n.toPrecision(12)).toString(); }
+
+/* General-purpose number formatter for converters */
+function fmtNum(n){
+  if(!isFinite(n)) return "—";
+  if(n === 0) return "0";
+  const abs = Math.abs(n);
+  let out;
+  if(abs >= 1e12 || abs < 1e-6){ out = n.toExponential(6); }
+  else { out = parseFloat(n.toPrecision(10)).toString(); }
+  // add thousands separators on the integer part if plain decimal
+  if(/^-?\d+(\.\d+)?$/.test(out)){
+    const neg = out.startsWith("-"); if(neg) out = out.slice(1);
+    const [int, dec] = out.split(".");
+    const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    out = (neg?"-":"") + grouped + (dec?"."+dec:"");
+  }
+  return out;
+}
+
+/* ====================== Calculator state ====================== */
+const state = { tab:"calc", expr:"", result:"0", mode:"deg", memory:0, history:[], showHistory:false, justEvaluated:false };
+const exprEl=document.getElementById("exprEl"), resultEl=document.getElementById("resultEl");
+const memFlag=document.getElementById("memFlag"), histPanel=document.getElementById("histPanel"), histBtn=document.getElementById("histBtn");
+
+function escapeHtml(s){ return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function render(){
+  exprEl.innerHTML = state.expr ? escapeHtml(state.expr) : "&nbsp;";
+  resultEl.textContent = state.result;
+  memFlag.classList.toggle("on", state.memory!==0);
+  histBtn.classList.toggle("active", state.showHistory);
+  renderHistory();
+}
+function renderHistory(){
+  if(!state.showHistory){ histPanel.style.display="none"; return; }
+  histPanel.style.display="block";
+  if(state.history.length===0){ histPanel.innerHTML='<div class="empty">No calculations yet</div>'; return; }
+  let html='<div class="head"><span>RECENT</span><button id="clearHist">Clear</button></div>';
+  state.history.forEach((h,idx)=>{ html+='<button class="hist-item" data-idx="'+idx+'"><div class="he">'+escapeHtml(h.expr)+'</div><div class="hr">= '+escapeHtml(h.result)+'</div></button>'; });
+  histPanel.innerHTML=html;
+  document.getElementById("clearHist").onclick=()=>{ state.history=[]; render(); };
+  histPanel.querySelectorAll(".hist-item").forEach(btn=>{ btn.onclick=()=>{ const h=state.history[+btn.dataset.idx]; state.expr=h.expr; state.result=h.result; state.justEvaluated=false; state.showHistory=false; render(); }; });
+}
+const OPERATOR_RE=/^([+\-×÷^%!²]|×\(-1\))$/;
+function append(text){
+  if(state.justEvaluated){ const isOp=OPERATOR_RE.test(text); state.justEvaluated=false; state.expr=isOp?state.result+text:text; }
+  else state.expr+=text;
+  render();
+}
+function clearAll(){ state.expr=""; state.result="0"; state.justEvaluated=false; render(); }
+function backspace(){ state.justEvaluated=false; const m=state.expr.match(/(sin|cos|tan|asin|acos|atan|ln|log|√)\($/); state.expr=m?state.expr.slice(0,-m[0].length):state.expr.slice(0,-1); render(); }
+function compute(){ if(!state.expr.trim()) return; try{ const v=evaluate(state.expr,state.mode); const f=formatResult(v); state.result=f; state.history.unshift({expr:state.expr,result:f}); state.history=state.history.slice(0,50); state.justEvaluated=true; }catch(e){ state.result="Error"; state.justEvaluated=true; } render(); }
+function currentValue(){ try{ return state.expr.trim()?evaluate(state.expr,state.mode):(parseFloat(state.result)||0); }catch{ return parseFloat(state.result)||0; } }
+
+/* Build scientific function rows */
+const fnButtons=[
+  ["(","("],[")",")"],["sin","sin("],["cos","cos("],["tan","tan("],
+  ["π","π"],["e","e"],["sin<sup>-1</sup>","asin("],["cos<sup>-1</sup>","acos("],["tan<sup>-1</sup>","atan("],
+  ["x²","²"],["x<sup>y</sup>","^"],["√","√("],["ln","ln("],["log","log("]
+];
+const fnRows=document.getElementById("fnRows");
+fnButtons.forEach(([label,val])=>{ const b=document.createElement("button"); b.className="key k-fn"; b.innerHTML=label; b.dataset.append=val; fnRows.appendChild(b); });
+
+/* Build main keypad */
+const mainKeys=[
+  ["C","util","action","C"],["⌫","util","action","BACK"],["%","util","append","%"],["÷","op","append","÷"],
+  ["7","num","append","7"],["8","num","append","8"],["9","num","append","9"],["×","op","append","×"],
+  ["4","num","append","4"],["5","num","append","5"],["6","num","append","6"],["−","op","append","−"],
+  ["1","num","append","1"],["2","num","append","2"],["3","num","append","3"],["+","op","append","+"],
+  ["±","num","append","×(-1)"],["0","num","append","0"],[".","num","append","."],["=","eq","action","EQ"]
+];
+const mainPad=document.getElementById("mainPad");
+mainKeys.forEach(([label,variant,kind,val])=>{ const b=document.createElement("button"); b.className="key k-"+variant; b.textContent=label; b.dataset[kind]=val; mainPad.appendChild(b); });
+
+document.getElementById("panel-calc").addEventListener("click",e=>{
+  const btn=e.target.closest("button.key"); if(!btn) return;
+  if(btn.dataset.append!==undefined) append(btn.dataset.append);
+  else if(btn.dataset.action){
+    const a=btn.dataset.action;
+    if(a==="C") clearAll();
+    else if(a==="BACK") backspace();
+    else if(a==="EQ") compute();
+    else if(a==="MC"){ state.memory=0; render(); }
+    else if(a==="MR") append(formatResult(state.memory));
+    else if(a==="M+"){ state.memory+=currentValue(); render(); }
+    else if(a==="M-"){ state.memory-=currentValue(); render(); }
+  }
+});
+document.getElementById("modeToggle").addEventListener("click",e=>{ const btn=e.target.closest("button"); if(!btn) return; state.mode=btn.dataset.mode; document.querySelectorAll("#modeToggle button").forEach(b=>b.classList.toggle("active",b===btn)); });
+histBtn.addEventListener("click",()=>{ state.showHistory=!state.showHistory; render(); });
+
+window.addEventListener("keydown",e=>{
+  if(state.tab!=="calc") return;                       // only drive the calculator
+  const tag=(e.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="select") return;            // don't hijack converter fields
+  const k=e.key;
+  if(/[0-9.]/.test(k)) append(k);
+  else if(k==="+") append("+");
+  else if(k==="-") append("−");
+  else if(k==="*") append("×");
+  else if(k==="/"){ e.preventDefault(); append("÷"); }
+  else if(k==="^") append("^");
+  else if(k==="(") append("(");
+  else if(k===")") append(")");
+  else if(k==="%") append("%");
+  else if(k==="!") append("!");
+  else if(k==="Enter"||k==="="){ e.preventDefault(); compute(); }
+  else if(k==="Backspace"){ e.preventDefault(); backspace(); }
+  else if(k==="Escape") clearAll();
+});
+
+/* ====================== Unit converter ====================== */
+// Each category: base unit math. Linear units use factor-to-base; temperature is special.
+const UNIT_DATA = {
+  Length: { units: { Meters:1, Kilometers:1000, Centimeters:0.01, Millimeters:0.001, Miles:1609.344, Yards:0.9144, Feet:0.3048, Inches:0.0254, "Nautical mi":1852 }, def:["Kilometers","Miles"] },
+  Mass:   { units: { Kilograms:1, Grams:0.001, Milligrams:1e-6, Tonnes:1000, Pounds:0.45359237, Ounces:0.028349523125, Stone:6.35029318 }, def:["Kilograms","Pounds"] },
+  Temperature: { temp:true, units:{ Celsius:1, Fahrenheit:1, Kelvin:1 }, def:["Celsius","Fahrenheit"] },
+  Volume: { units: { Liters:1, Milliliters:0.001, "Cubic m":1000, "Gallons (US)":3.785411784, "Quarts (US)":0.946352946, "Pints (US)":0.473176473, "Cups (US)":0.2365882365, "Fl oz (US)":0.0295735295625, "Gallons (UK)":4.54609 }, def:["Liters","Gallons (US)"] },
+  Area:   { units: { "Sq meters":1, "Sq kilometers":1e6, "Sq cm":1e-4, Hectares:10000, Acres:4046.8564224, "Sq feet":0.09290304, "Sq inches":0.00064516, "Sq miles":2589988.110336, "Sq yards":0.83612736 }, def:["Sq meters","Sq feet"] },
+  Speed:  { units: { "m/s":1, "km/h":0.277777778, "mph":0.44704, Knots:0.514444444, "ft/s":0.3048 }, def:["km/h","mph"] }
+};
+function tempConvert(v, from, to){
+  let c; // to Celsius
+  if(from==="Celsius") c=v; else if(from==="Fahrenheit") c=(v-32)*5/9; else c=v-273.15; // Kelvin
+  if(to==="Celsius") return c; if(to==="Fahrenheit") return c*9/5+32; return c+273.15;
+}
+const unitCategory=document.getElementById("unitCategory");
+const unitFromUnit=document.getElementById("unitFromUnit"), unitToUnit=document.getElementById("unitToUnit");
+const unitFromVal=document.getElementById("unitFromVal"), unitToVal=document.getElementById("unitToVal");
+
+Object.keys(UNIT_DATA).forEach(cat=>{ const o=document.createElement("option"); o.value=cat; o.textContent=cat; unitCategory.appendChild(o); });
+function populateUnitSelects(){
+  const cat=unitCategory.value; const data=UNIT_DATA[cat];
+  [unitFromUnit, unitToUnit].forEach(sel=>{ sel.innerHTML=""; Object.keys(data.units).forEach(u=>{ const o=document.createElement("option"); o.value=u; o.textContent=u; sel.appendChild(o); }); });
+  unitFromUnit.value=data.def[0]; unitToUnit.value=data.def[1];
+}
+function doUnitConvert(){
+  const cat=unitCategory.value; const data=UNIT_DATA[cat];
+  const raw=parseFloat(unitFromVal.value);
+  if(isNaN(raw)){ unitToVal.value=""; return; }
+  const from=unitFromUnit.value, to=unitToUnit.value;
+  let result;
+  if(data.temp) result=tempConvert(raw, from, to);
+  else result = raw * data.units[from] / data.units[to];
+  unitToVal.value = fmtNum(result);
+}
+unitCategory.addEventListener("change",()=>{ populateUnitSelects(); doUnitConvert(); });
+[unitFromVal].forEach(el=>el.addEventListener("input",doUnitConvert));
+[unitFromUnit,unitToUnit].forEach(el=>el.addEventListener("change",doUnitConvert));
+document.getElementById("unitSwap").addEventListener("click",()=>{ const a=unitFromUnit.value; unitFromUnit.value=unitToUnit.value; unitToUnit.value=a; doUnitConvert(); });
+populateUnitSelects(); doUnitConvert();
+
+/* ====================== Currency ====================== */
+const FX_CURRENCIES=["USD","EUR","GBP","AUD","NZD","JPY","CAD","CHF","CNY","INR","SGD","HKD","KRW","THB","MYR","ZAR"];
+const FX_METALS=["XAU","XAG","XPT","XPD"];
+const FX_NAMES={USD:"US Dollar",EUR:"Euro",GBP:"British Pound",AUD:"Australian Dollar",NZD:"New Zealand Dollar",JPY:"Japanese Yen",CAD:"Canadian Dollar",CHF:"Swiss Franc",CNY:"Chinese Yuan",INR:"Indian Rupee",SGD:"Singapore Dollar",HKD:"Hong Kong Dollar",KRW:"South Korean Won",THB:"Thai Baht",MYR:"Malaysian Ringgit",ZAR:"South African Rand",XAU:"Gold · troy ounce",XAG:"Silver · troy ounce",XPT:"Platinum · troy ounce",XPD:"Palladium · troy ounce"};
+// Metal spot prices in USD per troy ounce. Editable in the UI; defaults are a recent estimate, NOT live.
+const metalPrices={ XAU:2900, XAG:35, XPT:1000, XPD:1000 };
+function metalRates(){ const r={}; for(const m in metalPrices){ const p=parseFloat(metalPrices[m]); r[m]=(p>0)?1/p:0; } return r; }
+// Offline fallback: units of currency per 1 USD (approximate snapshot).
+// Used only when every live provider is unreachable.
+const FX_SNAPSHOT_DATE="2026-06-23";
+let fxRates={USD:1,EUR:0.92,GBP:0.79,AUD:1.52,NZD:1.66,JPY:157,CAD:1.37,CHF:0.88,CNY:7.25,INR:84,SGD:1.34,HKD:7.8,KRW:1380,THB:35,MYR:4.5,ZAR:18.5, ...metalRates()};
+let fxLive=false, fxDate=FX_SNAPSHOT_DATE, fxSource="";
+
+const fxFromCur=document.getElementById("fxFromCur"), fxToCur=document.getElementById("fxToCur");
+const fxFromVal=document.getElementById("fxFromVal"), fxToVal=document.getElementById("fxToVal");
+const fxFromName=document.getElementById("fxFromName"), fxToName=document.getElementById("fxToName");
+const fxStatus=document.getElementById("fxStatus"), fxRefresh=document.getElementById("fxRefresh");
+
+function buildCurSelect(sel){
+  sel.innerHTML="";
+  const g1=document.createElement("optgroup"); g1.label="Currencies";
+  FX_CURRENCIES.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; g1.appendChild(o); });
+  sel.appendChild(g1);
+  const g2=document.createElement("optgroup"); g2.label="Metals (per troy oz)";
+  FX_METALS.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; g2.appendChild(o); });
+  sel.appendChild(g2);
+}
+buildCurSelect(fxFromCur); buildCurSelect(fxToCur);
+fxFromCur.value="AUD"; fxToCur.value="USD";   // sensible default
+
+function updateFxCaptions(){ fxFromName.textContent=FX_NAMES[fxFromCur.value]||""; fxToName.textContent=FX_NAMES[fxToCur.value]||""; }
+
+function doFxConvert(){
+  updateFxCaptions();
+  const raw=parseFloat(fxFromVal.value);
+  if(isNaN(raw)){ fxToVal.value=""; return; }
+  const usd = raw / fxRates[fxFromCur.value];
+  const result = usd * fxRates[fxToCur.value];
+  fxToVal.value = fmtNum(result);
+}
+// Format an ISO date (or any Date-parsable string) as e.g. "23 Jun 2026".
+function fmtFxDate(d){
+  if(!d) return "";
+  const dt=new Date(d);
+  if(isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+}
+function setFxStatus(){
+  if(fxLive){
+    fxStatus.innerHTML='<b class="live">● Live</b> · '+fxSource+' · as of '+fmtFxDate(fxDate);
+  } else {
+    fxStatus.innerHTML='<b class="offline">● Offline estimate</b> · snapshot of '+fmtFxDate(fxDate);
+  }
+}
+// Live providers, tried in order. Each returns {rates:{CODE:perUSD}, date:"YYYY-MM-DD"} or null.
+const FX_PROVIDERS=[
+  { name:"ECB · Frankfurter", url:"https://api.frankfurter.dev/v1/latest?base=USD",
+    parse:d=>(d&&d.rates)?{rates:d.rates,date:d.date}:null },
+  { name:"ECB · Frankfurter", url:"https://api.frankfurter.app/latest?base=USD",
+    parse:d=>(d&&d.rates)?{rates:d.rates,date:d.date}:null },
+  { name:"exchangerate-api.com", url:"https://open.er-api.com/v6/latest/USD",
+    parse:d=>(d&&d.result==="success"&&d.rates)?{rates:d.rates,date:(d.time_last_update_utc||"")}:null }
+];
+async function fetchRates(){
+  fxRefresh.disabled=true; fxStatus.textContent="Loading latest rates…";
+  let loaded=false;
+  for(const p of FX_PROVIDERS){
+    try{
+      const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),6000);
+      const res=await fetch(p.url,{signal:ctrl.signal,cache:"no-store"});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error("bad response "+res.status);
+      const parsed=p.parse(await res.json());
+      if(!parsed) throw new Error("no rates");
+      // Keep only the currencies we offer; metals come from the editable spot prices.
+      const rates={USD:1};
+      FX_CURRENCIES.forEach(c=>{ if(typeof parsed.rates[c]==="number") rates[c]=parsed.rates[c]; });
+      fxRates={...rates, ...metalRates()};
+      fxLive=true; fxDate=parsed.date||""; fxSource=p.name;
+      loaded=true; break;
+    }catch(e){ /* try next provider */ }
+  }
+  if(!loaded){ fxLive=false; fxDate=FX_SNAPSHOT_DATE; }  // keep fallback snapshot
+  setFxStatus(); doFxConvert(); fxRefresh.disabled=false;
+}
+[fxFromVal].forEach(el=>el.addEventListener("input",doFxConvert));
+[fxFromCur,fxToCur].forEach(el=>el.addEventListener("change",doFxConvert));
+document.getElementById("fxSwap").addEventListener("click",()=>{ const a=fxFromCur.value; fxFromCur.value=fxToCur.value; fxToCur.value=a; doFxConvert(); });
+fxRefresh.addEventListener("click",fetchRates);
+
+// Editable metal spot prices
+document.getElementById("metalToggle").addEventListener("click",()=>{ document.getElementById("metalEdit").classList.toggle("hidden"); });
+["XAU","XAG","XPT","XPD"].forEach(m=>{
+  const inp=document.getElementById("price"+m);
+  inp.value=metalPrices[m];
+  inp.addEventListener("input",()=>{ const v=parseFloat(inp.value); if(v>0){ metalPrices[m]=v; fxRates[m]=1/v; doFxConvert(); } });
+});
+
+setFxStatus(); doFxConvert();
+// Fetch the latest rates up front so they're current before the user opens the tab.
+fetchRates();
+
+/* ====================== Tab switching ====================== */
+const panels={ calc:document.getElementById("panel-calc"), units:document.getElementById("panel-units"), fx:document.getElementById("panel-fx") };
+document.getElementById("tabs").addEventListener("click",e=>{
+  const btn=e.target.closest("button"); if(!btn) return;
+  const tab=btn.dataset.tab; state.tab=tab;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b===btn));
+  Object.keys(panels).forEach(k=>panels[k].classList.toggle("hidden", k!==tab));
+  // If we're still on the offline snapshot when the user opens Currency, try again for live rates.
+  if(tab==="fx" && !fxLive) fetchRates();
+});
+
+render();
+</script>
+</body>
+</html>

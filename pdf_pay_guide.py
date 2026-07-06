@@ -251,10 +251,11 @@ def extract_all(pdf_path: Path) -> dict:
             # ── Detect category / employment-type heading ──────────────────
             cat = next((c for l in lines[:5] for c in CATEGORIES if c.lower() in l.lower()), None)
             emp = next(
-                ("Casual" if "casual" in l.lower()
-                 else "Full-time & Part-time" if "full-time" in l.lower() or "part-time" in l.lower()
-                 else None
-                 for l in lines[:5] if l),
+                (
+                    "Casual" if "casual" in l.lower() else "Full-time & Part-time"
+                    for l in lines[:5]
+                    if l and ("casual" in l.lower() or "full-time" in l.lower() or "part-time" in l.lower())
+                ),
                 None,
             )
 

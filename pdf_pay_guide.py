@@ -343,14 +343,14 @@ HTML_TEMPLATE = r"""<!doctype html>
 
 /* ── Base ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
+html { font-size: 15px; }
 body {
   background: var(--bg);
   color: var(--text);
   display: flex;
   flex-direction: column;
-  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  line-height: 1.45;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Arial, sans-serif;
+  line-height: 1.5;
   min-height: 100vh;
 }
 
@@ -365,8 +365,8 @@ body {
   min-height: 3rem;
   padding: .5rem 1.25rem;
 }
-.topbar-title { font-size: .88rem; font-weight: 700; letter-spacing: -.01em; }
-.topbar-meta  { color: var(--text-sub); font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
+.topbar-title { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+.topbar-meta  { color: var(--text-sub); font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; }
 .topbar-right { margin-left: auto; }
 .theme-btn {
   background: none;
@@ -374,7 +374,7 @@ body {
   border-radius: 4px;
   color: var(--text-sub);
   cursor: pointer;
-  font-size: .72rem;
+  font-size: .75rem;
   padding: .25rem .65rem;
 }
 .theme-btn:hover { border-color: var(--accent); color: var(--text); }
@@ -397,7 +397,7 @@ body {
   color: var(--text-sub);
   cursor: pointer;
   flex-shrink: 0;
-  font-size: .79rem;
+  font-size: .875rem;
   font-weight: 500;
   margin-bottom: -2px;
   padding: .65rem 1rem;
@@ -431,7 +431,7 @@ body {
   border-right: 1px solid var(--border);
   color: var(--text-sub);
   cursor: pointer;
-  font-size: .72rem;
+  font-size: .75rem;
   font-weight: 600;
   letter-spacing: .04em;
   padding: .28rem .75rem;
@@ -451,7 +451,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
-  font-size: .79rem;
+  font-size: .875rem;
   outline: none;
   padding: .28rem .5rem .28rem 1.85rem;
   width: 100%;
@@ -459,14 +459,14 @@ body {
 .search-input:focus        { border-color: var(--accent); }
 .search-input::placeholder { color: var(--na); }
 
-.filter-label { color: var(--text-sub); font-size: .65rem; letter-spacing: .07em; text-transform: uppercase; }
+.filter-label { color: var(--text-sub); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
 .chip {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 3px;
   color: var(--text-sub);
   cursor: pointer;
-  font-size: .69rem;
+  font-size: .75rem;
   padding: .2rem .55rem;
   transition: background .1s, border-color .1s, color .1s;
   white-space: nowrap;
@@ -481,7 +481,7 @@ body {
   border-bottom: 1px solid var(--border);
   color: var(--accent);
   display: none;
-  font-size: .72rem;
+  font-size: .75rem;
   padding: .38rem 1.25rem;
 }
 .notice.on { display: block; }
@@ -489,7 +489,7 @@ body {
 /* ── Table container ───────────────────────────────── */
 .main   { flex: 1; overflow: hidden; }
 .t-wrap { max-height: calc(100vh - 11.5rem); overflow: auto; -webkit-overflow-scrolling: touch; }
-.data-table { border-collapse: collapse; font-size: .8rem; min-width: 100%; width: max-content; }
+.data-table { border-collapse: collapse; font-size: .875rem; min-width: 100%; width: max-content; }
 
 /* ── Header rows ───────────────────────────────────── */
 .th-group {
@@ -497,9 +497,9 @@ body {
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
   color: var(--text-sub);
-  font-size: .63rem;
+  font-size: .75rem;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: .07em;
   padding: .3rem .75rem;
   position: sticky;
   text-align: center;
@@ -514,7 +514,7 @@ body {
   border-bottom: 2px solid var(--border);
   border-right: 1px solid var(--border);
   color: var(--text-sub);
-  font-size: .67rem;
+  font-size: .75rem;
   font-weight: 600;
   letter-spacing: .02em;
   padding: .35rem .75rem;
@@ -531,7 +531,7 @@ body {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   border-right: 2px solid var(--border);
-  font-size: .82rem;
+  font-size: .875rem;
   left: 0;
   padding: .38rem .75rem;
   position: sticky;
@@ -551,40 +551,40 @@ body {
 tr:nth-child(even) .td-cls { background: var(--row-alt); }
 tr:nth-child(even) .td-val { background: var(--row-alt); }
 .v-money { color: var(--money); font-weight: 500; }
-.v-na    { color: var(--na); font-style: italic; font-size: .72rem; }
+.v-na    { color: var(--na); font-style: italic; }
 .v-empty { color: var(--border); }
 .group-start { border-left: 2px solid var(--border); }
 
 /* ── Allowances ────────────────────────────────────── */
 .allow-wrap { margin: 1.5rem auto; max-width: 820px; padding: 0 1.25rem; }
-.allow-heading { color: var(--text-sub); font-size: .72rem; font-weight: 700; letter-spacing: .09em; margin-bottom: .75rem; text-transform: uppercase; }
-.allow-table   { border-collapse: collapse; font-size: .83rem; width: 100%; }
+.allow-heading { color: var(--text-sub); font-size: .75rem; font-weight: 700; letter-spacing: .07em; margin-bottom: .75rem; text-transform: uppercase; }
+.allow-table   { border-collapse: collapse; font-size: .875rem; width: 100%; }
 .allow-table th {
   background: var(--th-bg);
   border-bottom: 2px solid var(--border);
   color: var(--text-sub);
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .07em;
   padding: .5rem .75rem;
   text-align: left;
   text-transform: uppercase;
 }
 .allow-table td { border-bottom: 1px solid var(--border); padding: .5rem .75rem; vertical-align: top; }
 .allow-table td:first-child { font-weight: 600; width: 38%; }
-.allow-table td:last-child  { color: var(--text-sub); font-size: .79rem; line-height: 1.45; }
+.allow-table td:last-child  { color: var(--text-sub); line-height: 1.5; }
 .allow-table tr:hover td    { background: var(--row-alt); }
 .star { color: var(--accent); }
 
 /* ── Empty state ───────────────────────────────────── */
-.empty { color: var(--text-sub); font-size: .85rem; padding: 3rem 1.25rem; text-align: center; }
+.empty { color: var(--text-sub); font-size: 1rem; padding: 3rem 1.25rem; text-align: center; }
 
 /* ── Footer ────────────────────────────────────────── */
 footer {
   background: var(--surface);
   border-top: 1px solid var(--border);
   color: var(--text-sub);
-  font-size: .69rem;
+  font-size: .75rem;
   line-height: 1.6;
   padding: .6rem 1.25rem;
 }
